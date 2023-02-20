@@ -1,0 +1,21 @@
+/venv/
+/d2v.model
+/doc2vec model testing 1.py
+/doc2vec test.py
+/doc2vec_test.ipynb
+/GoogleNews-vectors-negative300.bin
+/preprocessing_functionality.py
+/sklearn_TF_IDF_2_TEST.py
+/word2vec_second_test.py
+/word2vectesting.py
+/project_utilities/Datasets/
+/project_utilities/Datasets/ITSupport_Tickets.csv
+/project_utilities/Datasets/ITSupport_Tickets_High_Prio.csv
+/project_utilities/corpus.pickle
+/.idea/.gitignore
+/.idea/.name
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/TEXT CLASSIFICATION.iml
