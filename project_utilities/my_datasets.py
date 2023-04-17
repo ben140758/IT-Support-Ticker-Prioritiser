@@ -1,9 +1,82 @@
 
-from pandas import read_csv, read_pickle, DataFrame, concat
+from pandas import read_csv, DataFrame, concat
 
 from dataclasses import dataclass
 
 import preprocessing_functionality
+
+
+@dataclass
+class ITSupportDatasetWithBuilder:
+    """Class for storing the IT Support Ticket Descriptions, Impacts, Urgencies, and Overall Priority
+    Contains an associated Builder Class for flexible object creation."""
+    corpus = DataFrame
+
+    def __init__(self):
+        self.__get_raw_dataset()
+        self.__remove_nulls()
+        #self.corpus = self.corpus.reset_index().drop_duplicates(subset='index', keep='first').set_index('index')
+
+    def __get_raw_dataset(self):
+        ticket_data_low_prio = read_csv("C:\\Users\\Benjamin\\PycharmProjects\\DISSERTATION_ARTEFACT"
+                                        "\\project_utilities\\Datasets\\ITSupport_Tickets.csv")
+        ticket_data_high_prio = read_csv("C:\\Users\\Benjamin\\PycharmProjects\\DISSERTATION_ARTEFACT"
+                                         "\\project_utilities\\Datasets\\ITSupport_Tickets_High_Prio.csv")
+        self.corpus = concat([ticket_data_low_prio, ticket_data_high_prio])
+
+    def combine_summaries_with_descriptions(self):
+        combined_columns = []
+        for description, summary in zip(self.corpus['Description'].values, self.corpus['Incident_Summary'].values):
+            combined_columns.append(str(summary) + ' ' + str(description))
+
+        self.corpus['Description'] = combined_columns
+
+    def __remove_nulls(self):
+        self.corpus.replace('[None]', None, inplace=True)
+        self.corpus.dropna(axis=0, subset=['Description', 'Impact', 'Urgency'], inplace=True, how='any')
+        self.corpus.fillna('', axis=1, inplace=True)
+
+    def add_overall_priority_column(self):
+        prio_to_num = {'Low': 0, 'Medium': 1, 'High': 2}
+        num_to_pnum = ['P5', 'P4', 'P3', 'P2', 'P1']
+
+        pnums = []
+
+        for impact, urgency, date in zip(
+                self.corpus['Impact'].values, self.corpus['Urgency'].values, self.corpus['Added Date']):
+            try:
+                numbered_priority = sum([prio_to_num[impact], prio_to_num[urgency]])
+                pnums.append(num_to_pnum[numbered_priority])
+            except KeyError:
+                print(date)
+
+        self.corpus['Priority'] = pnums
+
+    def pre_process_texts(self):
+        self.corpus['Description'] = self.corpus['Description'].apply(preprocessing_functionality.clean_text)
+        self.corpus['Description'] = self.corpus['Description'].str.split()
+        self.corpus['Description'] = self.corpus['Description'].apply(preprocessing_functionality.stem_text)
+
+
+class ITSupportDatasetBuilder(object):
+    def __init__(self):
+        self._dataset = ITSupportDatasetWithBuilder()
+
+    def with_summaries_and_descriptions_combined(self):
+        self._dataset.combine_summaries_with_descriptions()
+        return self
+
+    def with_overall_priority_column(self):
+        self._dataset.add_overall_priority_column()
+        return self
+
+    def with_pre_processed_descriptions(self):
+        self._dataset.pre_process_texts()
+        return self
+
+    def build(self):
+        return self._dataset
+
 
 '''@dataclass
 class ITSupportDataset:
@@ -70,79 +143,6 @@ class ITSupportDataset:
             pnums.append(num_to_pnum[numbered_priority])
 
         self.corpus['Priorities'] = pnums'''
-
-
-@dataclass
-class ITSupportDatasetWithBuilder:
-    """Class for storing the IT Support Ticket Descriptions, Impacts, Urgencies, and Overall Priority
-    Contains an associated Builder Class for flexible object creation."""
-    corpus = DataFrame
-
-    def __init__(self):
-        self.__get_raw_dataset()
-        self.__remove_nulls()
-
-    def __get_raw_dataset(self):
-        ticket_data_low_prio = read_csv('/\\project_utilities'
-                                        '\\Datasets\\ITSupport_Tickets.csv')
-        ticket_data_high_prio = read_csv('/\\project_utilities'
-                                         '\\Datasets\\ITSupport_Tickets_High_Prio.csv')
-        self.corpus = concat([ticket_data_low_prio, ticket_data_high_prio])
-
-    def combine_summaries_with_descriptions(self):
-        combined_columns = []
-        for description, summary in zip(self.corpus['Description'].values, self.corpus['Incident_Summary'].values):
-            combined_columns.append(str(summary) + ' ' + str(description))
-
-        self.corpus['Description'] = combined_columns
-
-    def __remove_nulls(self):
-        self.corpus.replace('[None]', None, inplace=True)
-        self.corpus.dropna(axis=0, subset=['Description', 'Impact', 'Urgency'], inplace=True, how='any')
-        self.corpus.fillna('', axis=1, inplace=True)
-
-    def add_overall_priority_column(self):
-        prio_to_num = {'Low': 0, 'Medium': 1, 'High': 2}
-        num_to_pnum = ['P5', 'P4', 'P3', 'P2', 'P1']
-
-        pnums = []
-
-        for impact, urgency, date in zip(
-                self.corpus['Impact'].values, self.corpus['Urgency'].values, self.corpus['Added Date']):
-            try:
-                numbered_priority = sum([prio_to_num[impact], prio_to_num[urgency]])
-                pnums.append(num_to_pnum[numbered_priority])
-            except KeyError:
-                print(date)
-
-        self.corpus['Priority'] = pnums
-
-    def pre_process_texts(self):
-        self.corpus['Description'] = self.corpus['Description'].apply(preprocessing_functionality.clean_text)
-        self.corpus['Description'] = self.corpus['Description'].str.split()
-        self.corpus['Description'] = self.corpus['Description'].apply(preprocessing_functionality.stem_text)
-
-
-class ITSupportDatasetBuilder(object):
-    def __init__(self):
-        self._dataset = ITSupportDatasetWithBuilder()
-
-    def with_summaries_and_descriptions_combined(self):
-        self._dataset.combine_summaries_with_descriptions()
-        return self
-
-    def with_overall_priority_column(self):
-        self._dataset.add_overall_priority_column()
-        return self
-
-    def with_pre_processed_descriptions(self):
-        self._dataset.pre_process_texts()
-        return self
-
-    def build(self):
-        return self._dataset
-
-
 '''
         #Previous method, more efficient, way more lines though
         impacts = self.raw_dataset['Impact'].tolist()
@@ -189,3 +189,6 @@ if __name__ == '__main__':
     corpus.to_pickle('corpus.pickle')'''
     dataset = ITSupportDatasetBuilder().with_summaries_and_descriptions_combined().with_overall_priority_column().build()
     print(dataset.corpus.shape)
+    dataset.corpus = dataset.corpus.reset_index().drop_duplicates(subset='index', keep='first').set_index('index')
+    print(dataset.corpus.shape)
+    print(dataset.corpus.loc[1])
