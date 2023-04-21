@@ -2,7 +2,8 @@ from abc import ABC, abstractmethod
 import joblib
 from keras.models import load_model, save_model
 
-class ModelFileInteraction(ABC):
+
+class FileInteraction(ABC):
     @staticmethod
     @abstractmethod
     def load_from_file(filename):
@@ -14,7 +15,7 @@ class ModelFileInteraction(ABC):
         pass
 
 
-class SKLearnModelFileInteraction(ModelFileInteraction):
+class SKLearnModelFileInteraction(FileInteraction):
 
     @staticmethod
     def load_from_file(filename):
@@ -25,11 +26,11 @@ class SKLearnModelFileInteraction(ModelFileInteraction):
         joblib.dump(model, filename)
 
 
-class KerasModelFileInteraction(ModelFileInteraction):
+class KerasModelFileInteraction(FileInteraction):
     @staticmethod
     def load_from_file(filename):
         return load_model(filename)
 
     @staticmethod
     def load_to_file(model, filename):
-        model.save(filename)
+        save_model(model, filename)

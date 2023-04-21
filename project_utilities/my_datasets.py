@@ -1,9 +1,9 @@
-
-from pandas import read_csv, DataFrame, concat
+from pandas import read_csv, DataFrame, concat, read_json, read_excel
 
 from dataclasses import dataclass
 
 import preprocessing_functionality
+from projectsettings import DefaultConfig
 
 
 @dataclass
@@ -12,21 +12,34 @@ class ITSupportDatasetWithBuilder:
     Contains an associated Builder Class for flexible object creation."""
     corpus = DataFrame
 
-    def __init__(self):
-        self.__get_raw_dataset()
+    def __init__(self, *dataset_paths):
+        self.__get_raw_dataset(*dataset_paths)
         self.__remove_nulls()
-        #self.corpus = self.corpus.reset_index().drop_duplicates(subset='index', keep='first').set_index('index')
 
-    def __get_raw_dataset(self):
-        ticket_data_low_prio = read_csv("C:\\Users\\Benjamin\\PycharmProjects\\DISSERTATION_ARTEFACT"
-                                        "\\project_utilities\\Datasets\\ITSupport_Tickets.csv")
-        ticket_data_high_prio = read_csv("C:\\Users\\Benjamin\\PycharmProjects\\DISSERTATION_ARTEFACT"
-                                         "\\project_utilities\\Datasets\\ITSupport_Tickets_High_Prio.csv")
-        self.corpus = concat([ticket_data_low_prio, ticket_data_high_prio])
+    def __get_raw_dataset(self, *other_dataset_paths):
+        if not other_dataset_paths:
+            ticket_data_low_prio = read_csv(
+                f"{DefaultConfig.absolute_project_root_path()}/project_utilities/Datasets/ITSupport_Tickets.csv")
+            ticket_data_high_prio = read_csv(
+                f"{DefaultConfig.absolute_project_root_path()}/project_utilities/Datasets/ITSupport_Tickets_High_Prio.csv")
+            datasets = [ticket_data_low_prio, ticket_data_high_prio]
+        else:
+            datasets = [self.load_from_file(file) for file in other_dataset_paths]
+        self.corpus = concat(datasets)
+        print(self.corpus)
+
+    @staticmethod
+    def load_from_file(filename):
+        filetype = filename.split('.')[1].lower()
+        filetypes = {'csv': read_csv,
+                     'xlsx': read_excel,
+                     'json': read_json}
+
+        return filetypes[filetype](filename)
 
     def combine_summaries_with_descriptions(self):
         combined_columns = []
-        for description, summary in zip(self.corpus['Description'].values, self.corpus['Incident_Summary'].values):
+        for description, summary in zip(self.corpus['Description'].values, self.corpus['Incident Summary'].values):
             combined_columns.append(str(summary) + ' ' + str(description))
 
         self.corpus['Description'] = combined_columns
@@ -58,9 +71,13 @@ class ITSupportDatasetWithBuilder:
         self.corpus['Description'] = self.corpus['Description'].apply(preprocessing_functionality.stem_text)
 
 
-class ITSupportDatasetBuilder(object):
-    def __init__(self):
-        self._dataset = ITSupportDatasetWithBuilder()
+class ITSupportDatasetBuilder:
+    def __init__(self, *dataset_filenames):
+        if not dataset_filenames:
+            self._dataset = ITSupportDatasetWithBuilder()
+            return
+
+        self._dataset = ITSupportDatasetWithBuilder(*dataset_filenames)
 
     def with_summaries_and_descriptions_combined(self):
         self._dataset.combine_summaries_with_descriptions()

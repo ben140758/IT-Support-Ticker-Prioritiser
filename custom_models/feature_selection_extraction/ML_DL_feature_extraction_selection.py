@@ -14,7 +14,6 @@ from tqdm import tqdm
 from project_utilities import my_datasets
 import preprocessing_functionality
 
-
 class Doc2VecModels(Enum):
     DBOW = 1
     DM = 2
@@ -111,7 +110,7 @@ class ITSupportDoc2VecImplementation:
 
 
 if __name__ == '__main__':
-    dataset = my_datasets.ITSupportDatasetBuilder()\
+    '''dataset = my_datasets.ITSupportDatasetBuilder()\
         .with_overall_priority_column()\
         .with_summaries_and_descriptions_combined()\
         .with_pre_processed_descriptions()\
@@ -126,5 +125,5 @@ if __name__ == '__main__':
     print("time: " + str(time.perf_counter() - t1))
     doc2vec_IT.generate_vectors()
     print(doc2vec_IT.tagged_training_documents[50])
-    #print(doc2vec_IT.X_test)
+    #print(doc2vec_IT.X_test)'''
 
