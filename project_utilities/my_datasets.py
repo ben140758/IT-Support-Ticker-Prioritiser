@@ -1,10 +1,12 @@
+import pandas
 from pandas import read_csv, DataFrame, concat, read_json, read_excel
 
 from dataclasses import dataclass
 
 import preprocessing_functionality
 from projectsettings import DefaultConfig
-
+import nlpaug.augmenter.word as naw
+from bs4 import BeautifulSoup
 
 @dataclass
 class ITSupportDatasetWithBuilder:
@@ -13,23 +15,15 @@ class ITSupportDatasetWithBuilder:
     corpus = DataFrame
 
     def __init__(self, *dataset_paths):
-        self.__get_raw_dataset(*dataset_paths)
+        datasets = [self.load_from_file(file) for file in dataset_paths]
+        if len(datasets) > 1:
+            self.corpus = concat(datasets)
+        else:
+            self.corpus = datasets[0]
         self.__remove_nulls()
 
-    def __get_raw_dataset(self, *other_dataset_paths):
-        if not other_dataset_paths:
-            ticket_data_low_prio = read_csv(
-                f"{DefaultConfig.absolute_project_root_path()}/project_utilities/Datasets/ITSupport_Tickets.csv")
-            ticket_data_high_prio = read_csv(
-                f"{DefaultConfig.absolute_project_root_path()}/project_utilities/Datasets/ITSupport_Tickets_High_Prio.csv")
-            datasets = [ticket_data_low_prio, ticket_data_high_prio]
-        else:
-            datasets = [self.load_from_file(file) for file in other_dataset_paths]
-        self.corpus = concat(datasets)
-        print(self.corpus)
-
     @staticmethod
-    def load_from_file(filename):
+    def load_from_file(filename: str) -> pandas.DataFrame:
         filetype = filename.split('.')[1].lower()
         filetypes = {'csv': read_csv,
                      'xlsx': read_excel,
@@ -94,7 +88,12 @@ class ITSupportDatasetBuilder:
     def build(self):
         return self._dataset
 
-
+def generate_synonyms(dataset: DataFrame, filename):
+    # Create an instance of the SynonymAug class
+    aug = naw.SynonymAug(aug_src='wordnet', verbose=True)
+    copied_dataset = dataset.copy()
+    copied_dataset['Description'] = copied_dataset['Description'].apply(lambda doc: aug.augment(doc)[0])
+    copied_dataset.to_csv(filename)
 '''@dataclass
 class ITSupportDataset:
     """Class for storing the IT Support Ticket Descriptions, Impacts, Urgencies, and Overall Priority"""
@@ -204,8 +203,18 @@ if __name__ == '__main__':
                                      '\\Datasets\\ITSupport_Tickets_High_Prio.csv')
     corpus = concat([ticket_data_low_prio, ticket_data_high_prio])
     corpus.to_pickle('corpus.pickle')'''
-    dataset = ITSupportDatasetBuilder().with_summaries_and_descriptions_combined().with_overall_priority_column().build()
+    '''dataset = ITSupportDatasetBuilder().with_summaries_and_descriptions_combined().with_overall_priority_column().build()
     print(dataset.corpus.shape)
     dataset.corpus = dataset.corpus.reset_index().drop_duplicates(subset='index', keep='first').set_index('index')
     print(dataset.corpus.shape)
-    print(dataset.corpus.loc[1])
+    print(dataset.corpus.loc[1])'''
+    # Load Dataset
+    dataset = ITSupportDatasetBuilder(
+        f"{DefaultConfig.absolute_project_root_path()}/project_utilities/Datasets/ITSupport_Tickets.csv",
+        f"{DefaultConfig.absolute_project_root_path()}/project_utilities/Datasets/ITSupport_Tickets_High_Prio.csv") \
+        .with_summaries_and_descriptions_combined() \
+        .with_overall_priority_column() \
+        .build().corpus
+
+    print(dataset.shape)
+    #generate_synonyms(dataset, 'Datasets/synonym_IT_tickets.csv')

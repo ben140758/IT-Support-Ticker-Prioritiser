@@ -8,14 +8,18 @@ lemmatizer = nltk.stem.WordNetLemmatizer()
 stemmer = nltk.PorterStemmer()
 
 
-def clean_text(text):
+def clean_text(text: str) -> str:
+    # Strip HTML & XML
     text = BeautifulSoup(text, "lxml").text
     text = re.sub(r'\|\|\|', r' ', text)
+    # Strip Hyperlinks & URLs
     text = re.sub(r'http\S+', r'<URL>', text)
-    text = text.lower()
+    # Strip Non-word characters
+    text = re.sub(r'[^\w\s]', '', text)
+    # Convert string to lowercase
     text = text.replace('x', '')
+    text = text.lower()
     return text
-
 
 def tokenize_text(text):
     untokenized_sentences = nltk.sent_tokenize(text)

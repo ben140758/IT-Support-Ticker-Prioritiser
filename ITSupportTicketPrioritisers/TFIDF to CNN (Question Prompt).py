@@ -9,12 +9,12 @@ import sys
 # Load Pre-configured TF-IDF
 TFIDF_model = TFIDF_Model()
 TFIDF_model.from_file(
-    f'{DefaultConfig.absolute_project_root_path()}/custom_models/preconfigured_models/tfidf_model.joblib',
+    f'{DefaultConfig.absolute_project_root_path()}/custom_models/preconfigured_models/tfidf_larger_model.joblib',
     SKLearnModelFileInteraction())
 
 # Load Pre-configured Keras CNN
 CNN_model = KerasCNN()
-CNN_model.from_file(f'{DefaultConfig.absolute_project_root_path()}/custom_models/preconfigured_models/CNN_model.h5',
+CNN_model.from_file(f'{DefaultConfig.absolute_project_root_path()}/custom_models/preconfigured_models/CNN_model_deeper.h5',
                     KerasModelFileInteraction())
 
 # Convert P1-5 into categories the model understands

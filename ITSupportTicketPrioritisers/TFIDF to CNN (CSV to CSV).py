@@ -21,11 +21,11 @@ dataset = ITSupportDatasetBuilder(dataset_file_loc) \
 
 TFIDF_model = TFIDF_Model()
 TFIDF_model.from_file(
-    f'{DefaultConfig.absolute_project_root_path()}/custom_models/preconfigured_models/tfidf_model.joblib',
+    f'{DefaultConfig.absolute_project_root_path()}/custom_models/preconfigured_models/tfidf_larger_model.joblib',
     SKLearnModelFileInteraction())
 
 CNN_model = KerasCNN()
-CNN_model.from_file(f'{DefaultConfig.absolute_project_root_path()}/custom_models/preconfigured_models/CNN_model.h5',
+CNN_model.from_file(f'{DefaultConfig.absolute_project_root_path()}/custom_models/preconfigured_models/CNN_model_deeper.h5',
                     KerasModelFileInteraction())
 
 #X_train_str, X_test_str, y_train, y_test = TFIDF_model.split_dataset(0.1, dataset['Description'].tolist(),

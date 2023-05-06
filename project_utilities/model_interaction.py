@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import joblib
 from keras.models import load_model, save_model
+from gensim.models.doc2vec import Doc2Vec
 
 
 class FileInteraction(ABC):
@@ -34,3 +35,14 @@ class KerasModelFileInteraction(FileInteraction):
     @staticmethod
     def load_to_file(model, filename):
         save_model(model, filename)
+
+
+class GensimWordEmbeddingModelFileInteraction(FileInteraction):
+
+    @staticmethod
+    def load_from_file(filename):
+        return Doc2Vec.load(filename)
+
+    @staticmethod
+    def load_to_file(model, filename):
+        model.save(filename)
